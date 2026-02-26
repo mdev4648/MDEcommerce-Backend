@@ -17,9 +17,10 @@ class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
     cart_total =serializers.SerializerMethodField()# The name of field must be cart_total because the method name is get_cart_total
     # if we want overide method name get_cart_total  use like this>> cart_total = serializers.SerializerMethodField(method_name='calculate_total')
+    user = serializers.ReadOnlyField(source="user.email")
     class Meta:
         model = Cart
-        fields = ["id", "items","cart_total"]
+        fields = ["id", "items","cart_total","user"]
     def get_cart_total(self, obj): 
 
         return obj.get_cart_total()

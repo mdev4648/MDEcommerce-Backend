@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Cart, CartItem
 from .serializers import CartSerializer
-
+from rest_framework.generics import get_object_or_404
 
 class AddToCartView(APIView):
     permission_classes = [IsAuthenticated]
@@ -29,7 +29,6 @@ class AddToCartView(APIView):
         cart_item.save()
 
         return Response({"message": "Product added to cart"}, status=status.HTTP_200_OK)
-
 
 
 #Mulitple in one Request
@@ -57,9 +56,7 @@ class AddToCartView(APIView):
     #         cart_item.save()
 
     #     return Response({"message": "Items added to cart"})
-
-
-        
+  
 
 class ViewCartView(APIView):
     permission_classes = [IsAuthenticated]
@@ -68,3 +65,33 @@ class ViewCartView(APIView):
         cart = Cart.objects.get(user=request.user)
         serializer = CartSerializer(cart)
         return Response(serializer.data)
+
+
+class RemoveCartItemView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, item_id):
+        cart = get_object_or_404(Cart, user=request.user) 
+        cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)#get_object_or_404() → If object not found → returns 404 automatically
+
+        cart_item.delete()
+
+        return Response({"message": "Item removed from cart"})
+
+class UpdateCartItemView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, item_id):
+        cart = get_object_or_404(Cart, user=request.user)
+        cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
+
+        quantity = int(request.data.get("quantity", 1))
+
+        if quantity <= 0:
+            cart_item.delete()
+            return Response({"message": "Item removed because quantity was 0"})
+
+        cart_item.quantity = quantity
+        cart_item.save()
+
+        return Response({"message": "Quantity updated"})
