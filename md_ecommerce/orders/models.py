@@ -7,6 +7,8 @@ class Order(models.Model):
     STATUS_CHOICES = [
         ("PENDING", "Pending"),
         ("COMPLETED", "Completed"),
+        ('PROCESSING', 'Processing'),
+        ('COMPLETED', 'Completed'),
         ("SHIPPED","Shipped"),
         ("CANCELLED", "Cancelled")
     ]
@@ -50,3 +52,29 @@ class ShippingAddress(models.Model):
 
     def __str__(self):
         return f"{self.full_name} - {self.city}"
+
+# orders/models.py
+
+class Payment(models.Model):
+
+    PAYMENT_METHOD_CHOICES = (
+        ('COD', 'Cash On Delivery'),
+        ('CHAPA', 'Chapa'),
+    )
+
+    PAYMENT_STATUS_CHOICES = (
+        ('PENDING', 'Pending'),
+        ('SUCCESS', 'Success'),
+        ('FAILED', 'Failed'),
+    )
+
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="payment")
+
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default="PENDING")
+
+    transaction_id = models.CharField(max_length=255, blank=True, null=True)
+    paid_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Order {self.order.id} - {self.payment_method}"
