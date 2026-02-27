@@ -1,0 +1,11 @@
+Hello {{ order.user.username }},
+
+Thank you for your order!
+
+Order ID: {{ order.id }}
+Total Amount: {{ order.total_price }}
+Payment Method: {{ order.payment.payment_method }}
+
+We are processing your order.
+
+Thank you for shopping with us!

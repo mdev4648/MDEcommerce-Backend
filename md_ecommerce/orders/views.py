@@ -16,7 +16,8 @@ from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAdminUser
 from django.db import transaction# why we import? 
 from django.utils import timezone
-
+from django.core.mail import EmailMessage
+from .utils import render_to_pdf,send_invoice_email,send_order_confirmation_email
 
 class CreateOrderView(APIView):
     permission_classes = [IsAuthenticated]
@@ -81,8 +82,11 @@ class CreateOrderView(APIView):
         if payment_method == "COD":
             order.status = "PROCESSING"   # ready to ship
             order.save()
+            # send_invoice_email(order)
+            # send_order_confirmation_email(order)
 
         cart_items.delete()  # clear cart after order
+        send_order_confirmation_email(order)
 
         serializer = OrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -174,6 +178,7 @@ class AdminMarkCODPaidView(APIView):
 
         # ✅ Update order status
         order.status = "DELIVERED"
+        send_invoice_email(order)
         order.save()
 
         return Response({"message": "COD payment marked as SUCCESS"})
@@ -220,7 +225,7 @@ class InitializeChapaPaymentView(APIView):
             "first_name": request.user.username,
             "last_name": request.user.username,
             "tx_ref": tx_ref,
-            "return_url": "http://localhost:8000/api/orders/verify-chapa/",
+            "return_url": f"http://localhost:8000/api/orders/verify-chapa/?tx_ref={tx_ref}",
         }
 
         headers = {
@@ -300,16 +305,44 @@ class VerifyChapaPaymentView(APIView):
 
         if data.get("status") == "success":
             try:
-                payment = Payment.objects.get(transaction_id=tx_ref)
-                payment.payment_status = "SUCCESS"
-                payment.save()
+                with transaction.atomic():# If something fails, database rolls back.
+                    payment = Payment.objects.get(transaction_id=tx_ref)
+                    payment.payment_status = "SUCCESS"
+                    payment.save()
 
-                order = payment.order
-                order.status = "PROCESSING"
-                order.save()
-
-                return Response({"message": "Payment verified successfully"})
+                    order = payment.order
+                    order.status = "PROCESSING"
+                    order.save()
+                    send_invoice_email(order)# 🔥 Automatically send invoice
+                return Response({"message": "Payment verified successfully and invoice sent"})
             except Payment.DoesNotExist:
                 return Response({"error": "Payment not found"}, status=404)
 
         return Response({"error": "Payment not successful"})
+
+
+# class SendInvoiceView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request, order_id):
+#         try:
+#             order = Order.objects.get(id=order_id, user=request.user)
+#         except Order.DoesNotExist:
+#             return Response({"error": "Order not found"}, status=404)
+
+#         pdf = render_to_pdf("orders/invoice.html", {"order": order})
+#         if pdf is None:
+#             return Response({"error": "Could not generate PDF"}, status=500)
+
+#         email = EmailMessage(
+#             subject=f"Invoice for Order #{order.id}",
+#             body="Please find attached your invoice.",
+#             from_email="muledevs21@gmail.com",
+#             to=[request.user.email],
+#         )
+
+#         email.attach(f"invoice_{order.id}.pdf", pdf, "application/pdf")
+#         email.send()
+
+#         return Response({"message": "Invoice sent to email"})
+
