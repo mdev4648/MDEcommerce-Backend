@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import CreateOrderView,ViewOrderView,OrderDetailView,CancelOrderView,AdminUpdateOrderStatusView,AdminMarkCODPaidView,CheckoutSummaryView,InitializeChapaPaymentView,VerifyChapaPaymentView
+from.utils import send_invoice_email
 
 urlpatterns = [
     path("create/", CreateOrderView.as_view()),
@@ -11,4 +12,5 @@ urlpatterns = [
     path("checkout-summary/", CheckoutSummaryView.as_view(), name="checkout-summary"),
     path("chapa/initialize/<int:order_id>/", InitializeChapaPaymentView.as_view()),
     path("verify-chapa/", VerifyChapaPaymentView.as_view()),
+    # path("send-invoice/<int:order_id>/", SendInvoiceView.as_view()),
 ]

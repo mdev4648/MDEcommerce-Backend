@@ -149,3 +149,17 @@ cloudinary.config(
     api_key=CLOUDINARY['api_key'],
     api_secret=CLOUDINARY['api_secret']
 )
+
+
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # Insted of sending email just show in console terminal
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
