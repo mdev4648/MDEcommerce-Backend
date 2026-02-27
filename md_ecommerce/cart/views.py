@@ -22,6 +22,11 @@ class AddToCartView(APIView):
         )
 
         if not created:
+            # if quantity > product.stock: 
+            #     return Response(
+            #         {"error": "Not enough stock available"},
+            #         status=400
+            #     )
             cart_item.quantity += quantity
         else:
             cart_item.quantity = quantity
