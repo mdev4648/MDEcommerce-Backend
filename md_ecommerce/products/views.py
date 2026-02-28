@@ -3,8 +3,8 @@ from django.shortcuts import render
 # Create your views here.
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
-from .models import Product,Wishlist
-from .serializers import ProductSerializer,WishlistSerializer
+from .models import Product,Wishlist,ProductRating
+from .serializers import ProductSerializer,WishlistSerializer,ProductRatingSerializer
 from rest_framework.views import APIView
 class ProductCreateView(generics.CreateAPIView):
     serializer_class = ProductSerializer
@@ -60,3 +60,25 @@ class WishlistListView(APIView):
         items = Wishlist.objects.filter(user=request.user)
         serializer = WishlistSerializer(items, many=True)
         return Response(serializer.data)
+
+
+
+class AddProductRatingView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, product_id):
+        rating_value = request.data.get("rating")
+        review = request.data.get("review", "")
+
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=404)
+
+        rating_obj, created = ProductRating.objects.update_or_create(
+            user=request.user,
+            product=product,
+            defaults={"rating": rating_value, "review": review}
+        )
+
+        return Response({"message": "Rating submitted"})

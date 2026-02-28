@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, ProductImage,Wishlist
+from .models import Product, ProductImage,Wishlist,ProductRating
 import cloudinary.uploader
 
 
@@ -20,10 +20,12 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only=True,
         source='images'
     )
+    average_rating = serializers.ReadOnlyField()
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'images', 'product_images']
+        fields = ['id', 'name', 'description', 'price', 'images', 'product_images','average_rating']
+        # fields = "__all__" # to use all field
 
     def create(self, validated_data):
         images = validated_data.pop('images')
@@ -50,3 +52,8 @@ class WishlistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wishlist
         fields = ["id", "product", "product_name", "product_price", "created_at"]
+
+class ProductRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductRating
+        fields = ["id", "product", "rating", "review", "created_at"]
