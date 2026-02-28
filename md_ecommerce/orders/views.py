@@ -14,7 +14,7 @@ from rest_framework.generics import RetrieveAPIView
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAdminUser
-from django.db import transaction# why we import? 
+from django.db import transaction
 from django.utils import timezone
 from django.core.mail import EmailMessage
 from .utils import render_to_pdf,send_invoice_email,send_order_confirmation_email
