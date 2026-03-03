@@ -3,6 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Cart, CartItem
+from products.models import Product,ProductVariant
+
 from .serializers import CartSerializer
 from rest_framework.generics import get_object_or_404
 
@@ -12,14 +14,33 @@ class AddToCartView(APIView):
     def post(self, request):
         user = request.user
         product_id = request.data.get("product")
+        variant_id = request.data.get("variant_id")
         quantity = int(request.data.get("quantity", 1))
-
+        product = get_object_or_404(Product, id=product_id)
         cart, created = Cart.objects.get_or_create(user=user)
 
+        if product.has_variants:
+            
+            # variant_id = request.data.get("variant_id")
+            if not variant_id:
+                return Response({"error": "Please select variant"}, status=400)
+
+
+            variant = ProductVariant.objects.get(
+                id=variant_id,
+                product=product
+            )
+
+            if variant.stock < quantity:
+                return Response({"error": "Not enough stock"}, status=400)
+
+        
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
-            product_id=product_id
-        )
+            product_id=product_id,
+             variant=variant
+            )
+
 
         if not created:
             # if quantity > product.stock: 

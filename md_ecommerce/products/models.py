@@ -4,11 +4,12 @@ from users.models import User
 from django.conf import settings
 
 class Product(models.Model):
-    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name="products")
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name="products",null=True,blank=True)
     name = models.CharField(max_length=255)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    stock = models.PositiveIntegerField(default=0)  
+    stock = models.PositiveIntegerField(default=0)
+    has_variants = models.BooleanField(default=False)  
     created_at = models.DateTimeField(auto_now_add=True)
     @property #@property allows you to use a method like a normal field.
     def average_rating(self):
@@ -23,7 +24,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
-    image = models.URLField()  # store Cloudinary URL
+    image = models.URLField(null=True,blank=True)  # store Cloudinary URL
 
     def __str__(self):
         return f"Image for {self.product.name}"
@@ -53,3 +54,41 @@ class ProductRating(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.rating}"
+
+class VariantAttribute(models.Model):
+    name = models.CharField(max_length=100)  # Size, Color
+
+    def __str__(self):
+        return f"{self.name} "
+
+
+class VariantAttributeValue(models.Model):
+    attribute = models.ForeignKey(
+        VariantAttribute,
+        related_name="values",
+        on_delete=models.CASCADE
+    )
+    value = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.attribute}-{self.value}"
+
+
+
+class ProductVariant(models.Model):
+    product = models.ForeignKey(
+        Product,
+        related_name="variants",
+        on_delete=models.CASCADE
+    )
+
+    attributes = models.ManyToManyField(VariantAttributeValue)
+
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    stock = models.PositiveIntegerField()
+    sku = models.CharField(max_length=100, unique=True)
+
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.sku}"

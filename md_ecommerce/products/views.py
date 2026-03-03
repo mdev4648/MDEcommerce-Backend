@@ -3,7 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
-from .models import Product,Wishlist,ProductRating
+from .models import Product,Wishlist,ProductRating,VariantAttribute,VariantAttributeValue
 from .serializers import ProductSerializer,WishlistSerializer,ProductRatingSerializer
 from rest_framework.views import APIView
 class ProductCreateView(generics.CreateAPIView):
@@ -82,3 +82,67 @@ class AddProductRatingView(APIView):
         )
 
         return Response({"message": "Rating submitted"})
+
+
+
+class AddProductVariant(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        name = request.data.get("name")
+        try:
+            VariantAttribute_item, created = VariantAttribute.objects.get_or_create(
+                name=name
+            )
+        except:
+            return Response("Faild To Create")
+
+
+        if not created:
+            return Response({"message": "Already in Exist"})
+
+        return Response({"message": "Product Varaint is Create"})
+
+
+# class AddAttributeValue(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         attribute = request.data.get("attribute")
+#         value=request.data.get('value')
+#         try:
+#             VariantAttributeValue_item, created = VariantAttributeValue.objects.get_or_create(
+#                 attribute=attribute,
+#                 value=value
+#             )
+#         except:
+#             return Response("Faild To Createeee")
+
+
+#         if not created:
+#             return Response({"message": "Already in Exist"})
+
+#         return Response({"message": " Variant value is Created"})
+
+
+class AddAttributeValue(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        attribute_id = request.data.get("attribute")
+        value = request.data.get("value")
+
+        try:
+            attribute = VariantAttribute.objects.get(name=attribute_id)
+        except Attribute.DoesNotExist:
+            return Response({"error": "Attribute not found"}, status=404)
+
+        variant_value, created = VariantAttributeValue.objects.get_or_create(
+            attribute=attribute,
+            value=value
+        )
+
+        if not created:
+            return Response({"message": "Already exists"}, status=200)
+
+        return Response({"message": "Variant value created"}, status=201)

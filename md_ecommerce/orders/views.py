@@ -31,11 +31,32 @@ class CreateOrderView(APIView):
 
         # 🔴 CHECK STOCK BEFORE CREATING ORDER
         for item in cart_items:
-            if item.quantity > item.product.stock:
-                return Response(
-                    {"error": f"Not enough stock for {item.product.name}"},
-                    status=400
-                )
+            # if item.quantity > item.product.stock:
+            #     return Response(
+            #         {"error": f"Not enough stock for {item.product.name}"},
+            #         status=400
+            #     )
+            # If product has variants → check variant stock
+            if item.product.has_variants:
+                if not item.variant:
+                    return Response(
+                        {"error": f"Variant not selected for {item.product.name}"},
+                        status=400
+                    )
+
+                if item.quantity > item.variant.stock:
+                    return Response(
+                        {"error": f"Not enough stock for {item.product.name}"},
+                        status=400
+                    )
+
+            # Simple product
+            else:
+                if item.quantity > item.product.stock:
+                    return Response(
+                        {"error": f"Not enough stock for {item.product.name}"},
+                        status=400
+                    )
 
         # ✅ Create Order
         total_price = cart.get_cart_total()
@@ -46,18 +67,35 @@ class CreateOrderView(APIView):
         )
 
         for item in cart_items:
+            # Determine correct price
+            item_price = (
+                item.variant.price
+                if item.product.has_variants
+                else item.product.price
+            )
+            
             OrderItem.objects.create(
+
                 order=order,
                 product=item.product,
-                price=item.product.price,  # snapshot
+                # price=item.product.price,  # snapshot
+                # Determine correct price
+                price = item_price,
                 quantity=item.quantity
-            )
+                )
 
             product=item.product
 
             # 🔥 STOCK DEDUCTION HERE
-            product.stock -= item.quantity
-            product.save()
+            if item.product.has_variants:
+                item.variant.stock -= item.quantity
+                item.variant.save()
+            else:
+                item.product.stock -= item.quantity
+                item.product.save()
+
+            # product.stock -= item.quantity
+            # product.save()
 
         ShippingAddress.objects.create(
             user=request.user,
