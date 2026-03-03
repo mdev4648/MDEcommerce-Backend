@@ -138,10 +138,14 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 CLOUDINARY = {
-    'cloud_name': 'doebgagxy',
-    'api_key': '974931465217471',
-    'api_secret': '9GgF189wKjxIyFxFMNzVn6BLOc4'
+    'cloud_name': os.getenv("CLOUD_NAME"),
+    'api_key': os.getenv("CLOUDINARY_APIKEY"),
+    'api_secret': os.getenv("CLOUDINARY_API_SECRET")
 }
 
 cloudinary.config(
@@ -150,11 +154,7 @@ cloudinary.config(
     api_secret=CLOUDINARY['api_secret']
 )
 
-
 # EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # Insted of sending email just show in console terminal
-import os
-from dotenv import load_dotenv
-load_dotenv()
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"

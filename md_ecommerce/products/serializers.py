@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, ProductImage,Wishlist,ProductRating
+from .models import Product, ProductImage,Wishlist,ProductRating,ProductVariant,VariantAttribute
 import cloudinary.uploader
 
 
@@ -7,6 +7,29 @@ class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         fields = ['id', 'image']
+
+class ProductVariantSerializer(serializers.ModelSerializer):
+    attributes = serializers.StringRelatedField(many=True)
+
+    class Meta:
+        model = ProductVariant
+        fields = "__all__"
+
+    
+
+class VariantSerializer(serializers.ModelSerializer):
+    attributes = serializers.StringRelatedField(many=True)
+
+    class Meta:
+        model = VariantAttribute
+        fields = "__all__"
+
+    def create(self, name):
+        variant_attribute = VariantAttribute.objects.create(
+            name=name,
+        )
+
+        return variant_attribute
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -22,10 +45,12 @@ class ProductSerializer(serializers.ModelSerializer):
     )
     average_rating = serializers.ReadOnlyField()
 
+    variants = ProductVariantSerializer(many=True, read_only=True)
+
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'images', 'product_images','average_rating']
-        # fields = "__all__" # to use all field
+        # fields = ['id', 'name', 'description', 'price', 'images', 'product_images','average_rating']
+        fields = "__all__" # to use all field
 
     def create(self, validated_data):
         images = validated_data.pop('images')
@@ -57,3 +82,4 @@ class ProductRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductRating
         fields = ["id", "product", "rating", "review", "created_at"]
+
